@@ -8,6 +8,7 @@ typedef struct {
     u32 pid;
     u32 saddr; // Source IP
     u32 daddr; // Destination IP
+    u16 sport; // Source Port
     u16 dport; // Destination Port
     char comm[16]; // Process name
 } kray_event_t;
@@ -54,6 +55,7 @@ int BPF_KRETPROBE(tcp_v4_connect_ret, int ret) {
 
     e->pid = bpf_get_current_pid_tgid() >> 32;
     e->saddr = BPF_CORE_READ(sk, __sk_common.skc_rcv_saddr);
+    e->sport = BPF_CORE_READ(sk, __sk_common.skc_num);
     e->daddr = BPF_CORE_READ(sk, __sk_common.skc_daddr);
     e->dport = BPF_CORE_READ(sk, __sk_common.skc_dport);
     bpf_get_current_comm(&e->comm, sizeof(e->comm));

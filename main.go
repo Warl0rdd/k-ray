@@ -84,6 +84,6 @@ func main() {
 			continue
 		}
 
-		fmt.Printf("[*] PID %d (%s): %s -> %s:%d\n", event.Pid, internal.CommToString(event.Comm), internal.IntToIP(event.Saddr), internal.IntToIP(event.Daddr), internal.Ntohs(event.Dport))
+		fmt.Printf("[*] PID %d (%s): %s:%d -> %s:%d\n", event.Pid, internal.CommToString(event.Comm), internal.IntToIP(event.Saddr), event.Sport, internal.IntToIP(event.Daddr), internal.Ntohs(event.Dport))
 	}
 }
