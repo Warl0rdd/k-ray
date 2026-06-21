@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 func main() {
@@ -21,13 +22,11 @@ func main() {
 
 	fmt.Println("[*] Starting...")
 
-	fmt.Println("[*] Removing memory lock...")
 	if err := rlimit.RemoveMemlock(); err != nil {
 		fmt.Println("[ERROR] Failed to remove memory lock:", err)
 		os.Exit(1)
 	}
 
-	fmt.Println("[*] Loading BPF objects into the kernel...")
 	var objs ebpf.BpfObjects
 	if err := ebpf.LoadBpfObjects(&objs, nil); err != nil {
 		fmt.Println("[ERROR] Failed to load bpf objects:", err)
@@ -35,7 +34,6 @@ func main() {
 	}
 	defer objs.Close()
 
-	fmt.Println("[*] Attaching kprobe...")
 	probe, err := link.Kprobe("tcp_v4_connect", objs.TcpV4Connect, nil)
 	if err != nil {
 		fmt.Println("[ERROR] Failed to attach kprobe:", err)
@@ -43,7 +41,6 @@ func main() {
 	}
 	defer probe.Close()
 
-	fmt.Println("[*] Attaching kretprobe...")
 	retprobe, err := link.Kretprobe("tcp_v4_connect", objs.TcpV4ConnectRet, nil)
 	if err != nil {
 		fmt.Println("[ERROR] Failed to attach kretprobe:", err)
@@ -51,7 +48,6 @@ func main() {
 	}
 	defer retprobe.Close()
 
-	fmt.Println("[*] Opening the ring buffer...")
 	rd, err := ringbuf.NewReader(objs.Events)
 	if err != nil {
 		fmt.Println("[ERROR] Failed to create ring buffer reader:", err)
@@ -68,7 +64,19 @@ func main() {
 	}()
 
 	fmt.Println("[*] Started successfully!")
+
 	var event ebpf.BpfKrayEventT
+	buffer := internal.EventRingBuffer{}
+
+	go func() {
+		ticker := time.NewTicker(500 * time.Millisecond)
+		defer ticker.Stop()
+
+		for range ticker.C {
+			buffer.PrintTable()
+		}
+	}()
+
 	for {
 		record, err := rd.Read()
 		if err != nil {
@@ -84,6 +92,6 @@ func main() {
 			continue
 		}
 
-		fmt.Printf("[*] PID %d (%s): %s:%d -> %s:%d\n", event.Pid, internal.CommToString(event.Comm), internal.IntToIP(event.Saddr), event.Sport, internal.IntToIP(event.Daddr), internal.Ntohs(event.Dport))
+		buffer.Add(event)
 	}
 }
