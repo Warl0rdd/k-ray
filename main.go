@@ -65,6 +65,8 @@ func main() {
 
 	fmt.Println("[*] Started successfully!")
 
+	time.Sleep(1 * time.Second)
+
 	var event ebpf.BpfKrayEventT
 	buffer := internal.EventRingBuffer{}
 
