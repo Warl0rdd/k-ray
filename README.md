@@ -20,7 +20,7 @@ CLI tool that uses eBPF to monitor network activity of processes on a linux syst
 # Installation
 
 ```bash
-curl -LO https://github.com/Warl0rdd/k-ray/releases/download/latest/k-ray-linux-amd64
+curl -LO https://github.com/Warl0rdd/k-ray/releases/latest/download/k-ray-linux-amd64
 chmod +x k-ray-linux-amd64
 sudo ./k-ray-linux-amd64
 ```
